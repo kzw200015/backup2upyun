@@ -1,0 +1,12 @@
+## 配置部分开始 ##
+service_name = '' #服务名称
+operator_user = '' #操作员用户名
+operator_passwd = '' #操作员密码
+backup_mark = 'website-backup' #备份名称，用于标记
+backup_dir = ['typecho','wordpress'] #你要备份的目录，用单引号包裹，不同项之间用逗号隔开
+backup_pre_dir = '/home/wwwroot/' #备份目录的上级目录，即各个站点目录存放的目录。
+backup_database = ['typecho','wordpress'] #备份的数据库名，用单引号包裹，不同项之间用逗号隔开
+mysql_host = '127.0.0.1' #数据库地址，默认为本地
+mysql_user = 'root' #数据库用户名
+mysql_passwd = '' #数据库密码
+## 配置部分结束 ##
