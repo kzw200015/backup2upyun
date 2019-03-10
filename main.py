@@ -44,7 +44,10 @@ class backup2upyun(object):
             self.up.put(self.current_key, f, checksum=True)
 
     def __end(self):
-        self.up.delete(self.old_key)
+        try:
+            self.up.delete(self.old_key)
+        except Exception as e:
+            print('删除旧备份失败，可能是由于不存在旧备份\n错误信息：' + str(e))
         os.system('rm -rf *.zip *.sql')
         os.chdir(self.cwd)
 
