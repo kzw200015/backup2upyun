@@ -8,7 +8,7 @@
 
 直接使用git clone整个库
 
-`git clone https://github.com/kzw200015/backup-qiniu.git`
+`git clone https://github.com/kzw200015/backup2upyun.git`
 
 安装 python 环境
 
