@@ -9,7 +9,7 @@ from config import *
 
 class backup2upyun(object):
 
-    def __init__(self, service_name, operator_user, operator_passwd, backup_mark, backup_dir, backup_pre_dir, backup_database, mysql_host, mysql_user, mysql_passwd):
+    def __init__(self, service_name, operator_user, operator_passwd, backup_mark, backup_dir, backup_pre_dir, backup_database, mysql_host, mysql_user, mysql_passwd, mysql_charset):
         self.up = upyun.UpYun(service_name, operator_user, operator_passwd)
         self.backup_mark = backup_mark
         self.backup_dir = backup_dir
@@ -18,6 +18,7 @@ class backup2upyun(object):
         self.mysql_host = mysql_host
         self.mysql_user = mysql_user
         self.mysql_passwd = mysql_passwd
+        self.mysql_charset = mysql_charset
 
     def __start(self):
         self.cwd = os.getcwd()
@@ -36,7 +37,7 @@ class backup2upyun(object):
     def __dumpMysql(self):
         for each_database in self.backup_database:
             os.system(' '.join(['mysqldump -h', self.mysql_host, '-u' + self.mysql_user,
-                                '-p' + self.mysql_passwd, each_database, '>', each_database + '.sql']))
+                                '-p' + self.mysql_passwd, '--default-character-set=' + self.mysql_charset[each_database], each_database, '>', each_database + '.sql']))
 
     def __uploadFile(self):
         os.system(' '.join(['zip -q -r', self.current_key, '*.zip *.sql']))
@@ -64,5 +65,5 @@ class backup2upyun(object):
 
 if __name__ == '__main__':
     bak = backup2upyun(service_name, operator_user, operator_passwd, backup_mark,
-                       backup_dir, backup_pre_dir, backup_database, mysql_host, mysql_user, mysql_passwd)
+                       backup_dir, backup_pre_dir, backup_database, mysql_host, mysql_user, mysql_passwd, mysql_charset)
     bak.do()

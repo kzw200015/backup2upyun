@@ -8,5 +8,6 @@ backup_pre_dir = '/home/wwwroot/' #备份目录的上级目录，即各个站点
 backup_database = ['typecho','wordpress'] #备份的数据库名，用单引号包裹，不同项之间用逗号隔开
 mysql_host = '127.0.0.1' #数据库地址，默认为本地
 mysql_user = 'root' #数据库用户名
+mysql_charset = {'typecho': 'utf8', 'wordpress': 'utf8mb4'} #数据库字符集，每个数据库单独指定
 mysql_passwd = '' #数据库密码
 ## 配置部分结束 ##
