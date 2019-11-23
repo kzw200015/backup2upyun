@@ -30,6 +30,10 @@
 
 按照`config.py`内的说明进行配置
 
+赋予执行权限
+
+`chmod +x main.py`
+
 执行脚本
 
 `./main.py`
