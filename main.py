@@ -1,69 +1,45 @@
 #!/usr/bin/python3
 # -*- coding: UTF-8 -*-
 
-import upyun
-import os
 from datetime import datetime, timedelta
 from config import *
+import upyun
+import zipfile
+import os
 
 
-class backup2upyun(object):
+current_backup = backup_mark + '-' + (datetime.now()).strftime('%Y-%m-%d') + '.zip'
+outdated_backup = backup_mark + '-' + (datetime.now() - timedelta(days=3)).strftime('%Y-%m-%d') + '.zip'
 
-    def __init__(self, service_name, operator_user, operator_passwd, backup_mark, backup_dir, backup_pre_dir, backup_database, mysql_host, mysql_user, mysql_passwd, mysql_charset):
-        self.up = upyun.UpYun(service_name, operator_user, operator_passwd)
-        self.backup_mark = backup_mark
-        self.backup_dir = backup_dir
-        self.backup_pre_dir = backup_pre_dir
-        self.backup_database = backup_database
-        self.mysql_host = mysql_host
-        self.mysql_user = mysql_user
-        self.mysql_passwd = mysql_passwd
-        self.mysql_charset = mysql_charset
+with zipfile.ZipFile(current_backup, 'w') as zf:
 
-    def __start(self):
-        self.cwd = os.getcwd()
-        self.old_key = self.backup_mark + '-' + \
-            (datetime.now() - timedelta(days=3)).strftime('%Y-%m-%d') + '.zip'
-        self.current_key = self.backup_mark + '-' + \
-            (datetime.now()).strftime('%Y-%m-%d') + '.zip'
-        self.local_file_path = os.path.join(
-            self.backup_pre_dir, self.current_key)
-        os.chdir(self.backup_pre_dir)
+    for each_database in backup_database:
+        print('dumping database[{}]...'.format(each_database))
+        os.system('mysqldump -h{} --default-character-set={}  -u{} -p{} {} > {}.sql'.format(mysql_host, mysql_charset[each_database], mysql_user, mysql_passwd, each_database, each_database))
+        print('taring sql file[{}]...'.format(each_database + '.sql'))
+        zf.write(each_database + '.sql', compress_type=zipfile.ZIP_DEFLATED)
+        print('cleaning temp sql file[{}]...'.format(each_database + '.sql'))
+        os.remove(each_database + '.sql')
 
-    def __tarFiles(self):
-        for each_dir in self.backup_dir:
-            os.system(' '.join(['zip -q -r', each_dir + '.zip', each_dir]))
+    for each_dir in backup_dir:
+        print('taring dir[{}]'.format(each_dir))
+        for root, dirs, files in os.walk(os.path.join(backup_pre_dir, each_dir)):
+            for name in files:
+                zf.write(os.path.join(root, name), os.path.join(root, name).replace(backup_pre_dir, ''), compress_type=zipfile.ZIP_DEFLATED)
 
-    def __dumpMysql(self):
-        for each_database in self.backup_database:
-            os.system(' '.join(['mysqldump -h', self.mysql_host, '-u' + self.mysql_user,
-                                '-p' + self.mysql_passwd, '--default-character-set=' + self.mysql_charset[each_database], each_database, '>', each_database + '.sql']))
+up = upyun.UpYun(service_name, operator_user, operator_passwd)
 
-    def __uploadFile(self):
-        os.system(' '.join(['zip -q -r', self.current_key, '*.zip *.sql']))
-        with open(self.local_file_path, 'rb') as f:
-            self.up.put(self.current_key, f, checksum=True)
+print('uploading...')
+with open(current_backup, 'rb') as f:
+    res = up.put(current_backup, f, checksum=True)
 
-    def __end(self):
-        try:
-            self.up.delete(self.old_key)
-        except Exception as e:
-            print('删除旧备份失败，可能是由于不存在旧备份\n错误信息：' + str(e))
-        os.system('rm -rf *.zip *.sql')
-        os.chdir(self.cwd)
+print('deleting outdated backup...')
+try:
+    up.delete(outdated_backup)
+except Exception as e:
+    print('delete failed' + '\n' + str(e))
 
-    def do(self):
-        self.__start()
-        print('正在打包文件')
-        self.__tarFiles()
-        self.__dumpMysql()
-        print('正在上传')
-        self.__uploadFile()
-        print('正在删除临时文件以及旧备份')
-        self.__end()
+print('cleaning temp files...')
+os.remove(current_backup)
 
-
-if __name__ == '__main__':
-    bak = backup2upyun(service_name, operator_user, operator_passwd, backup_mark,
-                       backup_dir, backup_pre_dir, backup_database, mysql_host, mysql_user, mysql_passwd, mysql_charset)
-    bak.do()
+print('done!')
