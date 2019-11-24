@@ -3,13 +3,27 @@
 
 from datetime import datetime, timedelta
 from config import *
+from progressbar import Percentage, FileTransferSpeed, Bar, ETA, ProgressBar
 import upyun
 import zipfile
 import os
 
 
+class ProgressBarHandler(object):
+    def __init__(self, totalsize, params):
+        widgets = [params, Percentage(), ' ', Bar(marker='=', left='[', right=']'), ' ', ETA(), ' ', FileTransferSpeed()]
+        self.pbar = ProgressBar(widgets=widgets, maxval=totalsize).start()
+
+    def update(self, readsofar):
+        self.pbar.update(readsofar)
+
+    def finish(self):
+        self.pbar.finish()
+
+
 current_backup = backup_mark + '-' + (datetime.now()).strftime('%Y-%m-%d') + '.zip'
 outdated_backup = backup_mark + '-' + (datetime.now() - timedelta(days=3)).strftime('%Y-%m-%d') + '.zip'
+
 
 with zipfile.ZipFile(current_backup, 'w') as zf:
 
@@ -29,9 +43,8 @@ with zipfile.ZipFile(current_backup, 'w') as zf:
 
 up = upyun.UpYun(service_name, operator_user, operator_passwd)
 
-print('uploading...')
 with open(current_backup, 'rb') as f:
-    res = up.put(current_backup, f, checksum=True)
+    res = up.put(current_backup, f, checksum=True, handler=ProgressBarHandler, params="uploading ")
 
 print('deleting outdated backup...')
 try:
