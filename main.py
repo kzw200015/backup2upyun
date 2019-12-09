@@ -40,7 +40,8 @@ with tarfile.open(current_backup, 'w:gz') as tf:
         tf.add(tarFileName, os.path.basename(tarFileName))
         os.remove(tarFileName)
 
-up = upyun.UpYun(service_name, operator_user, operator_passwd)
+endpoint_servers = {'AUTO': upyun.ED_AUTO, 'CT': upyun.ED_TELECOM, 'CU': upyun.ED_CNC, 'CM': upyun.ED_CTT}
+up = upyun.UpYun(service_name, operator_user, operator_passwd, endpoint=endpoint_servers[server])
 
 with open(current_backup, 'rb') as f:
     res = up.put(current_backup, f, checksum=True, handler=ProgressBarHandler, params="uploading ")
